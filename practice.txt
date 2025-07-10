@@ -1,0 +1,4 @@
+NAME: ATQA
+AGE: 21
+Skills: Python, Data Analysis, ML
+Hobbies: Reading, Coding, Music

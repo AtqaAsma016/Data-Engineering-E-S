@@ -1,0 +1,8 @@
+Name: Mubrra
+Age: 23
+Skills: Python, Data Analysis, ML
+Hobbies: Reading, Coding, Music
+Name: Atqa
+Age: 19
+Skills: Python, Data Analysis, ML
+Hobbies: Reading, Coding, Music
