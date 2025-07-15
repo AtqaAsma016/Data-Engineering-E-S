@@ -1,0 +1,11 @@
+product,category,region,sales
+Laptop,Electronics,East,1200.0
+Phone,Electronics,West,800.0
+Tablet,Electronics,South,900.0
+TV,Electronics,East,1500.0
+Fan,Electronics,North,200.0
+Chair,Furniture,East,300.0
+Table,Furniture,South,450.0
+Desk,Furniture,West,700.0
+Sofa,Furniture,North,1100.0
+Bookshelf,Furniture,East,550.0
