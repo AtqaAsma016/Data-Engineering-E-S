@@ -15,7 +15,7 @@ from google.colab import files
 uploaded = files.upload()
 
 
-file_path = "/content/BigMart Sales.csv"  # replace with actual name like "train.csv"
+file_path = "/content/BigMart Sales.csv" 
 df = spark.read.csv(file_path, header=True, inferSchema=True)
 
 # Show sample data
