@@ -1,0 +1,42 @@
+from pyspark.sql import SparkSession
+
+# Start Spark session
+spark = SparkSession.builder \
+    .appName("Compare_AQE_vs_NonAQE") \
+    .config("spark.sql.adaptive.enabled", "true") \
+    .getOrCreate()
+
+# Load CSV
+df = spark.read.option("header", True).option("inferSchema", True).csv("/app/yellow_tripdata_2021-01.csv")
+
+# Common filter
+filtered_df = df.filter(
+    (df.trip_distance > 10) &
+    (df.fare_amount > 30) &
+    df.trip_distance.isNotNull() &
+    df.fare_amount.isNotNull()
+)
+#  Unoptimized (AQE Disabled)
+spark.conf.set("spark.sql.adaptive.enabled", "false")
+spark.sparkContext.setJobGroup("2_Unoptimized_AQE_Disabled", "Unoptimized aggregation without AQE")
+
+print("\n=== Running AQE Disabled Job ===")
+unoptimized_result = filtered_df.groupBy("VendorID").avg("fare_amount")
+unoptimized_data = unoptimized_result.collect()  # Single job action
+for row in unoptimized_data:
+    print(f"[Non-AQE] VendorID: {row['VendorID']}, Avg Fare: {row['avg(fare_amount)']}")
+#  Optimized (AQE Enabled)
+
+spark.conf.set("spark.sql.adaptive.enabled", "true")
+spark.sparkContext.setJobGroup("1_Optimized_AQE_Enabled", "Optimized aggregation with AQE")
+
+print("\n=== Running AQE Enabled Job ===")
+optimized_result = filtered_df.groupBy("VendorID").avg("fare_amount")
+optimized_data = optimized_result.collect()  # Single job action
+for row in optimized_data:
+    print(f"[AQE] VendorID: {row['VendorID']}, Avg Fare: {row['avg(fare_amount)']}")
+
+
+# Wait to keep session open for Spark UI observation
+input("\nPress Enter to stop Spark session...")
+spark.stop()
