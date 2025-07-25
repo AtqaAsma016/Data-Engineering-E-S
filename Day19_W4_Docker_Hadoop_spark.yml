@@ -1,0 +1,120 @@
+version: '3.7'
+
+services:
+  namenode:
+    image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
+    container_name: namenode
+    environment:
+      - CLUSTER_NAME=hadoop_cluster
+    ports:
+      - "9870:9870"   # HDFS Web UI
+      - "9000:9000"   # NameNode RPC
+    volumes:
+      - hadoop_namenode:/hadoop/dfs/name
+      # - shared-data:/data
+      - ./hadoop_data_myfolder:/data_container
+
+
+
+  datanode1:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+    container_name: datanode1
+    environment:
+      - CLUSTER_NAME=hadoop_cluster
+      - CORE_CONF_fs_defaultFS=hdfs://namenode:8020
+    depends_on:
+      - namenode
+    volumes:
+      - hadoop_datanode1:/hadoop/dfs/data
+      # - shared-data:/data
+      - ./hadoop_data_myfolder:/data_container
+
+
+
+  datanode2:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+    container_name: datanode2
+    environment:
+      - CLUSTER_NAME=hadoop_cluster
+      - CORE_CONF_fs_defaultFS=hdfs://namenode:8020
+    depends_on:
+      - namenode
+    volumes:
+      - hadoop_datanode2:/hadoop/dfs/data
+      # - shared-data:/data
+      - ./hadoop_data_myfolder:/data_container
+
+
+
+  resourcemanager:
+    image: bde2020/hadoop-resourcemanager:2.0.0-hadoop3.2.1-java8
+    container_name: resourcemanager
+    environment:
+      - YARN_CONF_yarn_resourcemanager_hostname=resourcemanager
+      - CORE_CONF_fs_defaultFS=hdfs://namenode:8020
+    ports:
+      - "8088:8088"  # YARN UI
+    depends_on:
+      - namenode
+    volumes:
+      # - shared-data:/data
+      - ./hadoop_data_myfolder:/data_container
+      - hadoop_config:/opt/hadoop/etc/hadoop  # Share config for Spark
+
+  nodemanager1:
+    image: bde2020/hadoop-nodemanager:2.0.0-hadoop3.2.1-java8
+    container_name: nodemanager1
+    environment:
+      - YARN_CONF_yarn_resourcemanager_hostname=resourcemanager
+      - CORE_CONF_fs_defaultFS=hdfs://namenode:8020
+    depends_on:
+      - resourcemanager
+    volumes:
+      # - shared-data:/data
+      - ./hadoop_data:/data
+
+
+  nodemanager2:
+    image: bde2020/hadoop-nodemanager:2.0.0-hadoop3.2.1-java8
+    container_name: nodemanager2
+    environment:
+      - YARN_CONF_yarn_resourcemanager_hostname=resourcemanager
+      - CORE_CONF_fs_defaultFS=hdfs://namenode:8020
+    depends_on:
+      - resourcemanager
+    volumes:
+      # - shared-data:/data
+      - ./hadoop_data_myfolder:/data_container
+
+
+
+  spark:
+    image: bitnami/spark:3.4
+    container_name: spark
+    environment:
+      - SPARK_MODE=master
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+      - HADOOP_CONF_DIR=/opt/hadoop/etc/hadoop  # Required for YARN mode
+
+    # command: ["spark-submit", "/app/compare_aggregation_jobs.py"]
+    command: ["spark-submit", "/app/cache_usage.py"]
+    ports:
+      - "4040:4040"  # Spark app UI
+    depends_on:
+      - namenode
+      - resourcemanager
+    volumes:
+      # - shared-data:/data
+      - ./hadoop_data_myfolder:/data_container
+      - hadoop_config:/opt/hadoop/etc/hadoop  # Access Hadoop configs
+      - ./spark_jobs:/app
+
+volumes:
+  hadoop_namenode:
+  hadoop_datanode1:
+  hadoop_datanode2:
+  # shared-data:
+  hadoop_config:
